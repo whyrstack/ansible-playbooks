@@ -1,0 +1,76 @@
+---
+# tasks file for kubeadm-worker
+# note: 1 worker node, does not scale hostname change
+- name: Upgrade all packages
+  ansible.builtin.yum:
+    name: '*'
+    state: latest
+
+- name: Create repository file
+  ansible.builtin.file:
+    path: /etc/yum.repos.d/kubernetes.repo
+    state: touch
+
+- name: Add kubernetes repository
+  ansible.builtin.blockinfile:
+    path: /etc/yum.repos.d/kubernetes.repo
+    block: |
+      [kubernetes]
+      name=Kubernetes
+      baseurl=https://packages.cloud.google.com/yum/repos/kubernetes-el7-\$basearch
+      enabled=1
+      gpgcheck=1
+      gpgkey=https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg
+      #exclude=kubelet kubeadm kubectl
+
+- name: Install a list of packages with a list variable
+  ansible.builtin.yum:
+    name: "{{ item }}"
+  with_items: 
+    - containerd
+    - iproute-tc
+    - httpd-tools
+    - kubelet 
+    - kubeadm 
+    - kubectl
+
+- name: Restart service containerd
+  ansible.builtin.service:
+    name: "{{ item }}"
+    state: restarted
+    enabled: true
+  with_items:
+    - containerd.service
+    - kubelet.service
+
+- name: Ensure SELinux is set to enforcing mode
+  ansible.builtin.lineinfile:
+    path: /etc/selinux/config
+    regexp: '^SELINUX='
+    line: SELINUX=disabled
+
+- name: Set worker-node01 hostname
+  ansible.builtin.hostname:
+    name: worker-node01
+
+- lineinfile:
+    path: /etc/hosts
+    insertbefore: '^127'
+    line: '{{ ansible_eth0.ipv4.address }} worker-node01'
+    state: present
+
+- ansible.posix.sysctl:
+    name: net.ipv4.ip_forward
+    value: '1'
+    sysctl_set: true
+
+- name: Turn off swapping
+  ansible.builtin.command: sudo swapoff -a
+  
+- name: Run modprobe overlay
+  ansible.builtin.command: sudo modprobe overlay
+
+- name: Run modprobe netfilter
+  ansible.builtin.command: sudo modprobe br_netfilter
+
+...

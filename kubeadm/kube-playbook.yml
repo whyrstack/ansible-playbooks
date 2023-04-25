@@ -1,0 +1,23 @@
+- name: Deploy kubeadm cluster
+  hosts: ec2-instances
+  gather_facts: true
+  tasks:
+      # Worker Node
+    - name: Execute role on Worker Node
+      include_role:
+        name: roles/kubeadm-worker
+      when: "{{ inventory_hostname[0] }}"
+  
+      # Master Node
+    - name: Execute role on Master Node
+      include_role:
+        name: roles/kubeadm-master
+      when: "{{ inventory_hostname[1] }}"
+
+    - name: Display cluster creation
+      ansible.builtin.debug:
+        var: cluster_create.stdout
+
+    - name: Display cluster join command
+      ansible.builtin.debug:
+        var: cluster_join.stdout
