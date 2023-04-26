@@ -1,2 +1,4 @@
 [ec2-instances]
-3.70.98.0
+# X.X.X.X master-node (controlplane)
+# X.X.X.X worker-1
+# X.X.X.X worker-2
