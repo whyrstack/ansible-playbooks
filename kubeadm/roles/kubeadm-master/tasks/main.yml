@@ -74,7 +74,7 @@
 
 
 - name: Create kubeadm cluster on controlplane node
-  ansible.builtin.command: sudo kubeadm init --pod-network-cidr=10.244.0.0/16 --control-plane-endpoint=controlplane --apiserver-advertise-address={{ ansible_eth0.ipv4.address }}
+  ansible.builtin.command: sudo kubeadm init --pod-network-cidr=10.244.0.0/16 --control-plane-endpoint={{ ansible_eth0.ipv4.address }} --apiserver-advertise-address={{ ansible_eth0.ipv4.address }}
   register: cluster_created
 
 - name: Create configmap
